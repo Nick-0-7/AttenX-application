@@ -1,6 +1,6 @@
 {
   "name": "attenx-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AttenX - NBA CO-PO Attainment Workbench Desktop Application for Windows",
   "main": "electron/main.js",
   "author": "Nick-0-7",
