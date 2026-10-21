@@ -73,6 +73,7 @@
         "owner": "Nick-0-7",
         "repo": "AttenX-application"
       }
-    ]
+    ],
+    "asar": false
   }
 }

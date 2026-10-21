@@ -1,5 +1,6 @@
 const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { fork } = require('child_process');
 const { autoUpdater } = require('electron-updater');
 
@@ -7,49 +8,73 @@ let mainWindow;
 let backendProcess;
 const BACKEND_PORT = process.env.PORT || 54321;
 
+function getAppRoot() {
+  return app.isPackaged ? path.join(process.resourcesPath, 'app') : path.join(__dirname, '..');
+}
+
 function startBackend() {
-  const backendScript = path.join(__dirname, '../backend/src/server.js');
-  const templateDir = path.join(__dirname, '../report-templates');
-  const userDataDir = app.getPath('userData');
-  const dbPath = path.join(userDataDir, 'attenx.db');
+  try {
+    const appRoot = getAppRoot();
+    const backendScript = path.join(appRoot, 'backend/src/server.js');
+    const templateDir = path.join(appRoot, 'report-templates');
+    const userDataDir = app.getPath('userData');
+    
+    if (!fs.existsSync(userDataDir)) {
+      fs.mkdirSync(userDataDir, { recursive: true });
+    }
+    
+    const dbPath = path.join(userDataDir, 'attenx.db');
+    const defaultDbPath = path.join(appRoot, 'backend/prisma/attenx.db');
+    
+    if (!fs.existsSync(dbPath) && fs.existsSync(defaultDbPath)) {
+      try {
+        fs.copyFileSync(defaultDbPath, dbPath);
+        console.log('[App] Copied seed database to:', dbPath);
+      } catch (e) {
+        console.error('[App] Failed to copy seed database:', e);
+      }
+    }
 
-  // If userData db does not exist, copy seed db if present or let Prisma create it
-  const defaultDbPath = path.join(__dirname, '../backend/prisma/attenx.db');
-  if (!fs.existsSync(dbPath) && fs.existsSync(defaultDbPath)) {
-    try {
-      fs.copyFileSync(defaultDbPath, dbPath);
-    } catch (e) {}
-  }
+    const dbUrl = 'file:' + dbPath.replace(/\\/g, '/');
+    console.log('[App] Launching backend:', backendScript);
+    console.log('[App] SQLite database URL:', dbUrl);
 
-  const dbUrl = 'file:' + dbPath.replace(/\\/g, '/');
+    backendProcess = fork(backendScript, [], {
+      env: {
+        ...process.env,
+        PORT: String(BACKEND_PORT),
+        NODE_ENV: 'production',
+        DATABASE_URL: dbUrl,
+        ATTENX_TEMPLATES_DIR: templateDir,
+      },
+      silent: true,
+    });
 
-  backendProcess = fork(backendScript, [], {
-    env: {
-      ...process.env,
-      PORT: String(BACKEND_PORT),
-      NODE_ENV: 'production',
-      DATABASE_URL: dbUrl,
-      ATTENX_TEMPLATES_DIR: templateDir,
-    },
-    silent: true,
-  });
+    if (backendProcess.stdout) {
+      backendProcess.stdout.on('data', (d) => console.log('[Backend]', d.toString()));
+    }
+    if (backendProcess.stderr) {
+      backendProcess.stderr.on('data', (d) => console.error('[Backend ERR]', d.toString()));
+    }
 
-  if (backendProcess.stdout) {
-    backendProcess.stdout.on('data', (d) => console.log('[Backend]', d.toString()));
-  }
-  if (backendProcess.stderr) {
-    backendProcess.stderr.on('data', (d) => console.error('[Backend ERR]', d.toString()));
+    backendProcess.on('error', (err) => console.error('[Backend Process Error]', err));
+    backendProcess.on('exit', (code) => console.log('[Backend Process Exited]', code));
+  } catch (err) {
+    console.error('[StartBackend Exception]', err);
   }
 }
 
 function createWindow() {
+  const appRoot = getAppRoot();
+  const iconPath = path.join(appRoot, 'frontend/src/assets/attainx-logo.png');
+
   mainWindow = new BrowserWindow({
     width: 1366,
     height: 860,
     minWidth: 1080,
     minHeight: 700,
     title: 'AttenX - NBA CO-PO Attainment Workbench',
-    icon: path.join(__dirname, '../frontend/src/assets/attainx-logo.png'),
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -62,7 +87,11 @@ function createWindow() {
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../frontend/dist/index.html'));
+    const indexPath = path.join(appRoot, 'frontend/dist/index.html');
+    console.log('[App] Loading index.html from:', indexPath);
+    mainWindow.loadFile(indexPath).catch((err) => {
+      console.error('[App] Failed to load index.html:', err);
+    });
   }
 
   mainWindow.on('closed', () => {
@@ -71,25 +100,31 @@ function createWindow() {
 }
 
 function setupAutoUpdater() {
-  if (process.env.NODE_ENV === 'development') return;
+  try {
+    if (process.env.NODE_ENV === 'development') return;
 
-  autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.checkForUpdatesAndNotify().catch((e) => {
+      console.log('[AutoUpdater] Check skipped/failed:', e.message);
+    });
 
-  autoUpdater.on('update-downloaded', () => {
-    dialog
-      .showMessageBox(mainWindow, {
-        type: 'info',
-        title: 'AttenX Update Available',
-        message: 'A new version of AttenX has been downloaded. Restart now to apply updates?',
-        buttons: ['Restart and Update', 'Later'],
-        defaultId: 0,
-      })
-      .then((res) => {
-        if (res.response === 0) {
-          autoUpdater.quitAndInstall();
-        }
-      });
-  });
+    autoUpdater.on('update-downloaded', () => {
+      dialog
+        .showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'AttenX Update Available',
+          message: 'A new version of AttenX has been downloaded. Restart now to apply updates?',
+          buttons: ['Restart and Update', 'Later'],
+          defaultId: 0,
+        })
+        .then((res) => {
+          if (res.response === 0) {
+            autoUpdater.quitAndInstall();
+          }
+        });
+    });
+  } catch (e) {
+    console.log('[AutoUpdater Setup Error]', e.message);
+  }
 }
 
 app.whenReady().then(() => {
