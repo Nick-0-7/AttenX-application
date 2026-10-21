@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "name": "admin",
+    "email": "admin@college.edu",
+    "passwordHash": "$2a$10$ll8ihwXF6xiJ0YJROLBfbuO8DLZKYKt.5tZW8Kcz79.9wQd9KVLoW",
+    "role": "ADMIN",
+    "createdAt": "2026-10-16T15:18:07.173Z"
+  },
+  {
+    "id": 2,
+    "name": "teacher",
+    "email": "teacher@college.edu",
+    "passwordHash": "$2a$10$cmxsBzHZ5fgYrUmWzGuQBeadCoXKptKF.DFzhOZ6yCUH4YxmDGJC6",
+    "role": "TEACHER",
+    "createdAt": "2026-10-16T15:18:07.174Z"
+  },
+  {
+    "id": 1792163905159,
+    "name": "vivek_test",
+    "email": "vivek@college.edu",
+    "passwordHash": "$2a$10$sx/ldBWrykicFzj8.t6fWexJ3gSI..RaQ6ca4HodLrDLXvZXylIYq",
+    "role": "TEACHER",
+    "createdAt": "2026-10-16T15:18:25.159Z"
+  },
+  {
+    "id": 1792164683787,
+    "name": "Vivek Londhe",
+    "email": "londhevivek73@gmail.com",
+    "passwordHash": "$2a$10$qLZVOeMCI2R.MtcztJWd0OWv5W1ErqrPTbwSLRWuqK6LPh4s4M/ka",
+    "role": "TEACHER",
+    "createdAt": "2026-10-16T15:31:23.787Z"
+  }
+]

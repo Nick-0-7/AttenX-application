@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  COORDINATOR
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(TEACHER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Teacher {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  createdAt DateTime  @default(now())
+  subjects  Subject[]
+}
+
+model Department {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  code      String    @unique
+  createdAt DateTime  @default(now())
+  subjects  Subject[]
+}
+
+model Subject {
+  id           Int             @id @default(autoincrement())
+  code         String          @unique
+  name         String
+  semester     Int             // 1 to 8
+  academicYear String          // e.g. "2025-26"
+  teacherId    Int
+  departmentId Int
+
+  teacher      Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  department   Department      @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  cos          CourseOutcome[]
+  coPoMappings CoPoMapping[]
+  studentMarks StudentMark[]
+  cesFeedbacks CesFeedback[]
+}
+
+model CourseOutcome {
+  id           Int           @id @default(autoincrement())
+  code         String        // e.g. "CO1", "CO2"
+  statement    String
+  subjectId    Int
+  subject      Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  coPoMappings CoPoMapping[]
+  studentMarks StudentMark[]
+  cesFeedbacks CesFeedback[]
+
+  @@unique([subjectId, code])
+}
+
+model ProgramOutcome {
+  id           Int           @id @default(autoincrement())
+  code         String        @unique // PO1 to PO12
+  statement    String
+  coPoMappings CoPoMapping[]
+}
+
+model ProgramSpecificOutcome {
+  id           Int           @id @default(autoincrement())
+  code         String        @unique // PSO1 to PSO3
+  statement    String
+  coPoMappings CoPoMapping[]
+}
+
+model CoPoMapping {
+  id        Int                     @id @default(autoincrement())
+  subjectId Int
+  coId      Int
+  poId      Int?
+  psoId     Int?
+  level     Float                   // 0 = No mapping, 1 = Low, 2 = Medium, 3 = High
+
+  subject   Subject                 @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  co        CourseOutcome           @relation(fields: [coId], references: [id], onDelete: Cascade)
+  po        ProgramOutcome?         @relation(fields: [poId], references: [id], onDelete: Cascade)
+  pso       ProgramSpecificOutcome? @relation(fields: [psoId], references: [id], onDelete: Cascade)
+
+  @@index([coId])
+  @@index([poId])
+  @@index([psoId])
+}
+
+model StudentMark {
+  id            Int           @id @default(autoincrement())
+  studentRollNo String
+  marks         Float
+  subjectId     Int
+  coId          Int
+
+  subject       Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  co            CourseOutcome @relation(fields: [coId], references: [id], onDelete: Cascade)
+
+  @@index([studentRollNo])
+  @@index([subjectId])
+  @@index([coId])
+}
+
+model CesFeedback {
+  id        Int           @id @default(autoincrement())
+  subjectId Int
+  coId      Int
+
+  countX    Int           @default(0) // > 70% satisfaction
+  countY    Int           @default(0) // 55% - 70% satisfaction
+  countZ    Int           @default(0) // < 55% satisfaction
+
+  subject   Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  co        CourseOutcome @relation(fields: [coId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, coId])
+  @@index([subjectId])
+  @@index([coId])
+}

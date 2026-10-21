@@ -1,0 +1,78 @@
+{
+  "name": "attenx-desktop",
+  "version": "1.0.0",
+  "description": "AttenX - NBA CO-PO Attainment Workbench Desktop Application for Windows",
+  "main": "electron/main.js",
+  "author": "Nick-0-7",
+  "license": "ISC",
+  "scripts": {
+    "postinstall": "npm --prefix backend install && npm --prefix frontend install",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:electron": "wait-on http://localhost:5173 && electron .",
+    "dev": "cross-env NODE_ENV=development concurrently -k -n \"BACKEND,FRONTEND,ELECTRON\" -c \"blue,green,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:electron\"",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "build": "npm run build:frontend && npm run build:backend",
+    "dist": "npm run build && electron-builder --win",
+    "dist:portable": "npm run build && electron-builder --win portable"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.attenx.desktop",
+    "productName": "AttenX",
+    "copyright": "Copyright © 2026",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "backend/src/**/*",
+      "backend/prisma/**/*",
+      "backend/node_modules/**/*",
+      "backend/package.json",
+      "frontend/dist/**/*",
+      "report-templates/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "frontend/src/assets/attainx-logo.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AttenX"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Nick-0-7",
+        "repo": "AttenX-application"
+      }
+    ]
+  }
+}

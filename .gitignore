@@ -1,0 +1,7 @@
+node_modules/
+dist/
+release/
+.env
+attenx.db
+attenx.db-journal
+*.log

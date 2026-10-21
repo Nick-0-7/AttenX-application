@@ -1,0 +1,125 @@
+/* ==========================================================
+   CINEMATIC SMOOTH SCROLL & SCROLL-TRIGGERED ANIMATIONS
+   Powered by Lenis Smooth Scroll
+   ========================================================== */
+
+/* --- Lenis Essential Base --- */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Custom sleek, unobtrusive scrollbar for modern browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* Light mode thumb for portal */
+.portal:not(.dark) ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+.portal:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+
+/* --- Cinematic Scroll Reveal System --- */
+
+/* Single element smooth fade-up */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 1.05s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.05s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.05s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-on-scroll.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children reveal (for cards, grids, steps) */
+.reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-stagger.is-revealed > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-stagger.is-revealed > *:nth-child(1) {
+  transition-delay: 0.04s;
+}
+.reveal-stagger.is-revealed > *:nth-child(2) {
+  transition-delay: 0.14s;
+}
+.reveal-stagger.is-revealed > *:nth-child(3) {
+  transition-delay: 0.24s;
+}
+.reveal-stagger.is-revealed > *:nth-child(4) {
+  transition-delay: 0.34s;
+}
+.reveal-stagger.is-revealed > *:nth-child(5) {
+  transition-delay: 0.44s;
+}
+.reveal-stagger.is-revealed > *:nth-child(6) {
+  transition-delay: 0.54s;
+}
+
+/* Subtle section title reveal */
+.section-content.reveal-on-scroll h2 span {
+  display: inline-block;
+  transition: color 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Respect user accessibility preferences */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll,
+  .reveal-stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
