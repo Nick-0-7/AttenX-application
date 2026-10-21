@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { fork } = require('child_process');
@@ -6,7 +6,11 @@ const { autoUpdater } = require('electron-updater');
 
 let mainWindow;
 let backendProcess;
+let isManualUpdateCheck = false;
 const BACKEND_PORT = process.env.PORT || 54321;
+
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
 
 function getAppRoot() {
   return app.isPackaged ? path.join(process.resourcesPath, 'app') : path.join(__dirname, '..');
@@ -64,6 +68,76 @@ function startBackend() {
   }
 }
 
+function buildMenu() {
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Exit',
+          accelerator: 'CmdOrCtrl+Q',
+          click: () => {
+            app.quit();
+          },
+        },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ],
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Check for Updates...',
+          click: () => {
+            isManualUpdateCheck = true;
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'Checking for Updates',
+              message: 'Connecting to update server to check for latest AttenX releases...',
+              buttons: ['OK'],
+            });
+            autoUpdater.checkForUpdates().catch((err) => {
+              dialog.showErrorBox(
+                'Update Check Failed',
+                'Unable to check for updates: ' + (err.message || 'Unknown network error')
+              );
+            });
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'About AttenX',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'About AttenX',
+              message: 'AttenX Desktop Workbench\nVersion: ' + app.getVersion() + '\nOffline NBA CO-PO Attainment System',
+              detail: 'Repository: https://github.com/Nick-0-7/AttenX-application',
+              buttons: ['OK'],
+            });
+          },
+        },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
 function createWindow() {
   const appRoot = getAppRoot();
   const iconPath = path.join(appRoot, 'frontend/src/assets/attainx-logo.png');
@@ -82,6 +156,8 @@ function createWindow() {
     },
     autoHideMenuBar: false,
   });
+
+  buildMenu();
 
   const isDev = process.env.NODE_ENV === 'development';
   if (isDev) {
@@ -103,17 +179,48 @@ function setupAutoUpdater() {
   try {
     if (process.env.NODE_ENV === 'development') return;
 
-    autoUpdater.checkForUpdatesAndNotify().catch((e) => {
-      console.log('[AutoUpdater] Check skipped/failed:', e.message);
+    autoUpdater.on('update-available', (info) => {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Update Found',
+        message: 'Version ' + info.version + ' of AttenX is available!',
+        detail: 'The update is downloading automatically in the background. You will be prompted when it is ready to install.',
+        buttons: ['OK'],
+      });
     });
 
-    autoUpdater.on('update-downloaded', () => {
+    autoUpdater.on('update-not-available', (info) => {
+      if (isManualUpdateCheck) {
+        isManualUpdateCheck = false;
+        dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'You are Up to Date',
+          message: 'AttenX v' + app.getVersion() + ' is the latest version.',
+          detail: 'No newer updates were found on GitHub.',
+          buttons: ['OK'],
+        });
+      }
+    });
+
+    autoUpdater.on('error', (err) => {
+      console.log('[AutoUpdater Error]', err);
+      if (isManualUpdateCheck) {
+        isManualUpdateCheck = false;
+        dialog.showErrorBox(
+          'Update Check Failed',
+          'Could not retrieve update information:\n' + (err.message || 'Unknown error')
+        );
+      }
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
       dialog
         .showMessageBox(mainWindow, {
           type: 'info',
-          title: 'AttenX Update Available',
-          message: 'A new version of AttenX has been downloaded. Restart now to apply updates?',
-          buttons: ['Restart and Update', 'Later'],
+          title: 'Update Ready to Install',
+          message: 'AttenX version ' + info.version + ' has finished downloading!',
+          detail: 'Would you like to restart AttenX now to apply the update?',
+          buttons: ['Restart & Install', 'Later'],
           defaultId: 0,
         })
         .then((res) => {
@@ -121,6 +228,10 @@ function setupAutoUpdater() {
             autoUpdater.quitAndInstall();
           }
         });
+    });
+
+    autoUpdater.checkForUpdatesAndNotify().catch((e) => {
+      console.log('[AutoUpdater Startup Check skipped/failed]:', e.message);
     });
   } catch (e) {
     console.log('[AutoUpdater Setup Error]', e.message);
