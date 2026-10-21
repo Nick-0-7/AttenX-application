@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
 
 import Landing from "./components/Landing";
 import Login from "./components/Login";
@@ -10,9 +10,13 @@ import { SmoothScrollProvider } from "./context/SmoothScroll";
 
 import "./App.css";
 
+// In desktop file:// mode, HashRouter ensures instant route resolution without blank screens
+const isDesktop = typeof window !== "undefined" && (window.location.protocol === "file:" || Boolean(window.electronAPI?.isDesktop));
+const Router = isDesktop ? HashRouter : BrowserRouter;
+
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <SmoothScrollProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -23,7 +27,7 @@ function App() {
           <Route path="/reportformat" element={<ReportFormat />} />
         </Routes>
       </SmoothScrollProvider>
-    </BrowserRouter>
+    </Router>
   );
 }
 
