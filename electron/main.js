@@ -12,40 +12,60 @@ const BACKEND_PORT = process.env.PORT || 54321;
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
-function getAppRoot() {
-  return app.isPackaged ? path.join(process.resourcesPath, 'app') : path.join(__dirname, '..');
+function getBackendDir() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'backend')
+    : path.join(__dirname, '..', 'backend');
+}
+
+function getTemplateDir() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'report-templates')
+    : path.join(__dirname, '..', 'report-templates');
+}
+
+function getFrontendHtml() {
+  return app.isPackaged
+    ? path.join(app.getAppPath(), 'frontend', 'dist', 'index.html')
+    : path.join(__dirname, '..', 'frontend', 'dist', 'index.html');
 }
 
 function startBackend() {
   try {
-    const appRoot = getAppRoot();
-    const backendScript = path.join(appRoot, 'backend/src/server.js');
-    const templateDir = path.join(appRoot, 'report-templates');
+    const backendDir = getBackendDir();
+    const backendScript = path.join(backendDir, 'src', 'server.js');
+    const templateDir = getTemplateDir();
     const userDataDir = app.getPath('userData');
     
     if (!fs.existsSync(userDataDir)) {
       fs.mkdirSync(userDataDir, { recursive: true });
     }
+
+    const logFile = path.join(userDataDir, 'backend.log');
+    const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+    logStream.write('\n[' + new Date().toISOString() + '] Starting AttenX backend...\n');
+    logStream.write('Backend script: ' + backendScript + '\n');
     
     const dbPath = path.join(userDataDir, 'attenx.db');
-    const defaultDbPath = path.join(appRoot, 'backend/prisma/attenx.db');
+    const defaultDbPath = path.join(backendDir, 'prisma', 'attenx.db');
     
     if (!fs.existsSync(dbPath) && fs.existsSync(defaultDbPath)) {
       try {
         fs.copyFileSync(defaultDbPath, dbPath);
-        console.log('[App] Copied seed database to:', dbPath);
+        logStream.write('Copied seed database to: ' + dbPath + '\n');
       } catch (e) {
-        console.error('[App] Failed to copy seed database:', e);
+        logStream.write('Failed to copy seed database: ' + e.message + '\n');
       }
     }
 
     const dbUrl = 'file:' + dbPath.replace(/\\/g, '/');
-    console.log('[App] Launching backend:', backendScript);
-    console.log('[App] SQLite database URL:', dbUrl);
+    logStream.write('SQLite database URL: ' + dbUrl + '\n');
 
     backendProcess = fork(backendScript, [], {
+      cwd: backendDir,
       env: {
         ...process.env,
+        ELECTRON_RUN_AS_NODE: '1',
         PORT: String(BACKEND_PORT),
         NODE_ENV: 'production',
         DATABASE_URL: dbUrl,
@@ -55,14 +75,18 @@ function startBackend() {
     });
 
     if (backendProcess.stdout) {
-      backendProcess.stdout.on('data', (d) => console.log('[Backend]', d.toString()));
+      backendProcess.stdout.pipe(logStream);
     }
     if (backendProcess.stderr) {
-      backendProcess.stderr.on('data', (d) => console.error('[Backend ERR]', d.toString()));
+      backendProcess.stderr.pipe(logStream);
     }
 
-    backendProcess.on('error', (err) => console.error('[Backend Process Error]', err));
-    backendProcess.on('exit', (code) => console.log('[Backend Process Exited]', code));
+    backendProcess.on('error', (err) => {
+      logStream.write('Backend Process Error: ' + err.message + '\n');
+    });
+    backendProcess.on('exit', (code, sig) => {
+      logStream.write('Backend Process Exited with code ' + code + ' signal ' + sig + '\n');
+    });
   } catch (err) {
     console.error('[StartBackend Exception]', err);
   }
@@ -139,8 +163,7 @@ function buildMenu() {
 }
 
 function createWindow() {
-  const appRoot = getAppRoot();
-  const iconPath = path.join(appRoot, 'frontend/src/assets/attainx-logo.png');
+  const iconPath = path.join(__dirname, '../frontend/src/assets/attainx-logo.png');
 
   mainWindow = new BrowserWindow({
     width: 1366,
@@ -163,7 +186,7 @@ function createWindow() {
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
   } else {
-    const indexPath = path.join(appRoot, 'frontend/dist/index.html');
+    const indexPath = getFrontendHtml();
     console.log('[App] Loading index.html from:', indexPath);
     mainWindow.loadFile(indexPath).catch((err) => {
       console.error('[App] Failed to load index.html:', err);

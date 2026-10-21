@@ -1,6 +1,6 @@
 {
   "name": "attenx-desktop",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "AttenX - NBA CO-PO Attainment Workbench Desktop Application for Windows",
   "main": "electron/main.js",
   "author": "Nick-0-7",
@@ -36,12 +36,7 @@
     },
     "files": [
       "electron/**/*",
-      "backend/src/**/*",
-      "backend/prisma/**/*",
-      "backend/node_modules/**/*",
-      "backend/package.json",
-      "frontend/dist/**/*",
-      "report-templates/**/*"
+      "frontend/dist/**/*"
     ],
     "win": {
       "target": [
@@ -74,6 +69,22 @@
         "repo": "AttenX-application"
       }
     ],
-    "asar": false
+    "asar": false,
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!**/.git/**",
+          "!node_modules/.cache/**",
+          "!node_modules/prisma/**"
+        ]
+      },
+      {
+        "from": "report-templates",
+        "to": "report-templates"
+      }
+    ]
   }
 }
