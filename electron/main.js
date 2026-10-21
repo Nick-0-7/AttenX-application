@@ -10,12 +10,25 @@ const BACKEND_PORT = process.env.PORT || 54321;
 function startBackend() {
   const backendScript = path.join(__dirname, '../backend/src/server.js');
   const templateDir = path.join(__dirname, '../report-templates');
+  const userDataDir = app.getPath('userData');
+  const dbPath = path.join(userDataDir, 'attenx.db');
+
+  // If userData db does not exist, copy seed db if present or let Prisma create it
+  const defaultDbPath = path.join(__dirname, '../backend/prisma/attenx.db');
+  if (!fs.existsSync(dbPath) && fs.existsSync(defaultDbPath)) {
+    try {
+      fs.copyFileSync(defaultDbPath, dbPath);
+    } catch (e) {}
+  }
+
+  const dbUrl = 'file:' + dbPath.replace(/\\/g, '/');
 
   backendProcess = fork(backendScript, [], {
     env: {
       ...process.env,
       PORT: String(BACKEND_PORT),
       NODE_ENV: 'production',
+      DATABASE_URL: dbUrl,
       ATTENX_TEMPLATES_DIR: templateDir,
     },
     silent: true,
