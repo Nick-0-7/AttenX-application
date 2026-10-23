@@ -602,6 +602,18 @@ function Portal() {
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Disable Lenis smooth scroll while history modal is open so wheel/trackpad events scroll the modal body
+  useEffect(() => {
+    if (showHistory) {
+      window.__lenis?.stop();
+    } else {
+      window.__lenis?.start();
+    }
+    return () => {
+      window.__lenis?.start();
+    };
+  }, [showHistory]);
+
   // Profile Card ref to detect outside clicks
   const profileCardRef = useRef(null);
 
@@ -2049,13 +2061,19 @@ function Portal() {
       {showHistory && (
         <div
           className="history-modal-overlay"
+          data-lenis-prevent="true"
           onClick={(e) => {
             if (e.target.classList.contains("history-modal-overlay")) {
               setShowHistory(false);
             }
           }}
         >
-          <div className="history-modal-card">
+          <div
+            className="history-modal-card"
+            data-lenis-prevent="true"
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             <div className="history-modal-header">
               <h2>
                 <IconHistory size={20} />
@@ -2070,7 +2088,12 @@ function Portal() {
               </button>
             </div>
 
-            <div className="history-modal-body">
+            <div
+              className="history-modal-body"
+              data-lenis-prevent="true"
+              onWheel={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+            >
               {historyItems.length === 0 ? (
                 <div className="history-empty-state">
                   <IconHistory size={40} />
