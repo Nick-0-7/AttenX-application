@@ -272,6 +272,80 @@ body {
   border-top: 1px solid var(--border);
 }
 
+/* =========================================
+   SIDEBAR LOCKED & GUEST STATES
+========================================= */
+
+.sidebar-guest-user {
+  cursor: pointer;
+}
+
+.guest-avatar {
+  background: var(--surface-2);
+  color: var(--soft);
+  border: 1px solid var(--border);
+}
+
+.sign-in-pill {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: var(--text);
+  color: var(--bg);
+}
+
+.menu-item.locked-step {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.menu-item.locked-step:hover {
+  background: transparent;
+  color: var(--soft);
+}
+
+.step-lock-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  color: var(--muted);
+}
+
+.step-label-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-quick-theme {
+  margin-bottom: 10px;
+}
+
+.sidebar-theme-btn {
+  width: 100%;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-theme-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
 
 /* =========================================
    MAIN CONTENT
@@ -282,6 +356,160 @@ body {
   min-height: 100vh;
   padding: 55px 5vw 100px;
   overflow: visible;
+}
+
+/* LOGGED-OUT MAIN SECTION & ROTATING DELTA */
+.portal-main-logged-out {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.logged-out-center-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 620px;
+  text-align: center;
+  margin: auto;
+  z-index: 5;
+}
+
+.logged-out-delta-wrapper {
+  width: 320px;
+  height: 250px;
+  margin: 0 auto 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logged-out-brand-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.logged-out-logo-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.logged-out-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.logged-out-brand-title {
+  margin: 0;
+  font-size: clamp(34px, 4.5vw, 46px);
+  font-weight: 600;
+  letter-spacing: -1.5px;
+  color: var(--text-pure);
+  line-height: 1;
+}
+
+.logged-out-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: var(--badge-bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.logged-out-description {
+  max-width: 480px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--soft);
+  margin: 0 0 28px;
+}
+
+.logged-out-action-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.logged-out-login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 220px;
+  padding: 14px 32px;
+  border-radius: 30px;
+  background: var(--text-pure);
+  color: var(--bg);
+  border: 1px solid var(--text-pure);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logged-out-login-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.92);
+}
+
+.login-arrow {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.logged-out-login-btn:hover .login-arrow {
+  transform: translate(2px, -2px);
+}
+
+.logged-out-register-prompt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.logged-out-create-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.logged-out-create-link:hover {
+  color: #6366f1;
 }
 
 

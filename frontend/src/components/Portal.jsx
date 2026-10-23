@@ -6,10 +6,71 @@ import { curriculumSubjects } from "../data/curriculumData";
 import API_BASE_URL from "../config/api";
 import "../templates/Portal.css";
 import attainxLogo from "../assets/attainx-logo.png";
+import TickerDelta from "./TickerDelta";
 
 // =========================================
 // SVG ICONS (Crisp, themeable, zero-emoji)
 // =========================================
+const IconLock = ({ size = 15, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const IconSun = ({ size = 15, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="5" />
+    <line x1="12" y1="1" x2="12" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="23" />
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+    <line x1="1" y1="12" x2="3" y2="12" />
+    <line x1="21" y1="12" x2="23" y2="12" />
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+  </svg>
+);
+
+const IconMoon = ({ size = 15, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+);
+
 const IconTrash = ({ size = 16, className = "" }) => (
   <svg
     width={size}
@@ -511,8 +572,24 @@ function Portal() {
 
   const [user, setUser] = useState(getStoredUser);
 
-  // Light mode by default as requested
-  const [darkMode, setDarkMode] = useState(false);
+  // Auth state: check if user is logged in
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return Boolean(localStorage.getItem("authToken") || localStorage.getItem("currentUser"));
+  });
+
+  // Dark mode synced with localStorage
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("attenx_theme") === "dark";
+  });
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const next = !prev;
+      localStorage.setItem("attenx_theme", next ? "dark" : "light");
+      return next;
+    });
+  };
+
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -537,10 +614,11 @@ function Portal() {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("currentUser");
     if (!token && !storedUser) {
-      console.warn("No active session found. Redirecting to login...");
-      navigate("/login");
+      setIsLoggedIn(false);
       return;
     }
+
+    setIsLoggedIn(true);
 
     // Optional background session ping to backend /api/auth/me
     if (token) {
@@ -562,7 +640,7 @@ function Portal() {
           // Fallback gracefully to offline/local session
         });
     }
-  }, [navigate]);
+  }, []);
 
   // Handle clicking outside profile card to close it
   useEffect(() => {
@@ -627,10 +705,10 @@ function Portal() {
   const [templateDownloaded, setTemplateDownloaded] = useState(false);
   const [hasExistingTemplate, setHasExistingTemplate] = useState(false);
 
-  // Empty rows generator for blank template
+  // Empty rows generator for blank template (PRN, CA1, MSE, CA2, ESE, COs)
   const createEmptyTemplateRows = (count = 5) => {
     return Array.from({ length: count }, () => {
-      const row = { name: "", prn: "", ca1: "", mse: "", ca2: "", ese: "" };
+      const row = { prn: "", ca1: "", mse: "", ca2: "", ese: "" };
       for (let i = 1; i <= 6; i++) {
         row[`co${i}`] = "";
       }
@@ -1532,7 +1610,8 @@ function Portal() {
   const logout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentUser");
-    navigate("/login");
+    setIsLoggedIn(false);
+    setShowProfile(false);
   };
 
   // =========================================
@@ -1544,7 +1623,7 @@ function Portal() {
   };
 
   const getTemplateColumns = () => {
-    const baseCols = ["Name", "PRN", "CA1", "MSE", "CA2", "ESE"];
+    const baseCols = ["PRN", "CA1", "MSE", "CA2", "ESE"];
     const coCols = Array.from({ length: templateCoCount }, (_, i) => `CO${i + 1}`);
     return [...baseCols, ...coCols];
   };
@@ -1560,7 +1639,6 @@ function Portal() {
 
   const handleAddTemplateRow = () => {
     const newRow = {
-      name: "",
       prn: "",
       ca1: "",
       mse: "",
@@ -1577,7 +1655,6 @@ function Portal() {
     const cols = getTemplateColumns();
     const rowsData = templateData.map((item) => {
       const row = [
-        item.name || "",
         item.prn || "",
         item.ca1 ?? "",
         item.mse ?? "",
@@ -1600,8 +1677,7 @@ function Portal() {
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
     worksheet["!cols"] = [
-      { wch: 22 },
-      { wch: 16 },
+      { wch: 18 },
       { wch: 10 },
       { wch: 10 },
       { wch: 10 },
@@ -1625,7 +1701,6 @@ function Portal() {
     const cols = getTemplateColumns();
     const rowsData = templateData.map((item) => {
       const row = [
-        `"${item.name || ""}"`,
         `"${item.prn || ""}"`,
         item.ca1 ?? "",
         item.mse ?? "",
@@ -1703,18 +1778,33 @@ function Portal() {
         </div>
 
         {/* USER */}
-        <div className="sidebar-user" onClick={() => setShowProfile(true)}>
-          <div className="avatar">
-            {user.image ? <img src={user.image} alt="profile" /> : initial}
-          </div>
+        {isLoggedIn ? (
+          <div className="sidebar-user" onClick={() => setShowProfile(true)}>
+            <div className="avatar">
+              {user.image ? <img src={user.image} alt="profile" /> : initial}
+            </div>
 
-          <div className="user-details">
-            <strong>{user.name}</strong>
-            <span>{user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase()) : "Faculty"}</span>
-          </div>
+            <div className="user-details">
+              <strong>{user.name}</strong>
+              <span>{user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase()) : "Faculty"}</span>
+            </div>
 
-          <span className="dots">•••</span>
-        </div>
+            <span className="dots">•••</span>
+          </div>
+        ) : (
+          <div className="sidebar-user sidebar-guest-user" onClick={() => navigate("/login")}>
+            <div className="avatar guest-avatar">
+              <IconLock size={15} />
+            </div>
+
+            <div className="user-details">
+              <strong>Guest Session</strong>
+              <span>Sign in required</span>
+            </div>
+
+            <span className="sign-in-pill">Login</span>
+          </div>
+        )}
 
         {/* 4-STEP WORKFLOW MENU */}
         <div className="sidebar-menu">
@@ -1724,21 +1814,29 @@ function Portal() {
 
           {stepItems.map((step) => {
             const isClickable =
-              step.id === 1 ||
-              (step.id === 2 && isStep1Complete) ||
-              (step.id === 3 && isStep1Complete && isStep2Complete) ||
-              (step.id === 4 && isStep1Complete && isStep2Complete && isStep3Complete);
+              isLoggedIn &&
+              (step.id === 1 ||
+                (step.id === 2 && isStep1Complete) ||
+                (step.id === 3 && isStep1Complete && isStep2Complete) ||
+                (step.id === 4 && isStep1Complete && isStep2Complete && isStep3Complete));
 
             return (
               <button
                 key={step.id}
-                className={`menu-item ${currentStep === step.id ? "active" : ""}`}
-                onClick={() => goToStep(step.id)}
-                style={{ opacity: isClickable ? 1 : 0.6 }}
+                className={`menu-item ${isLoggedIn && currentStep === step.id ? "active" : ""} ${!isLoggedIn ? "locked-step" : ""}`}
+                onClick={isClickable ? () => goToStep(step.id) : null}
+                disabled={!isClickable}
+                title={!isLoggedIn ? "Please log in to access this step" : ""}
+                style={{ opacity: !isLoggedIn ? 0.6 : isClickable ? 1 : 0.6 }}
               >
+                {!isLoggedIn && (
+                  <span className="step-lock-icon">
+                    <IconLock size={13} />
+                  </span>
+                )}
                 <span>{step.num}</span>
-                {step.title}
-                {step.isComplete && (
+                <span className="step-label-text">{step.title}</span>
+                {isLoggedIn && step.isComplete && (
                   <span className="menu-step-badge">
                     <IconCheck size={12} />
                   </span>
@@ -1750,14 +1848,15 @@ function Portal() {
           <div style={{ height: "1px", background: "var(--border)", margin: "14px 0" }} />
 
           <button
-            className="menu-item"
-            onClick={() => setShowHistory(true)}
+            className={`menu-item ${!isLoggedIn ? "locked-step" : ""}`}
+            onClick={isLoggedIn ? () => setShowHistory(true) : () => navigate("/login")}
+            style={{ opacity: !isLoggedIn ? 0.6 : 1 }}
           >
             <span>
-              <IconHistory size={16} />
+              {!isLoggedIn ? <IconLock size={14} /> : <IconHistory size={16} />}
             </span>
             Attainment History
-            {historyItems.length > 0 && (
+            {isLoggedIn && historyItems.length > 0 && (
               <span
                 style={{
                   marginLeft: "auto",
@@ -1775,14 +1874,28 @@ function Portal() {
           </button>
         </div>
 
-        {/* SETTINGS */}
+        {/* SETTINGS & THEME TOGGLE */}
         <div className="sidebar-bottom">
-          <button className="menu-item" onClick={() => setShowProfile(true)}>
-            <span>
-              <IconSettings size={16} />
-            </span>
-            Settings
-          </button>
+          <div className="sidebar-quick-theme">
+            <button
+              type="button"
+              className="sidebar-theme-btn"
+              onClick={toggleDarkMode}
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? <IconSun size={15} /> : <IconMoon size={15} />}
+              <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
+            </button>
+          </div>
+
+          {isLoggedIn && (
+            <button className="menu-item" onClick={() => setShowProfile(true)}>
+              <span>
+                <IconSettings size={16} />
+              </span>
+              Settings
+            </button>
+          )}
         </div>
       </aside>
 
@@ -2006,7 +2119,87 @@ function Portal() {
       {/* =====================================
           MAIN CONTENT AREA
       ===================================== */}
-      <main className="portal-main">
+      {!isLoggedIn ? (
+        <main className="portal-main portal-main-logged-out">
+          <div className="logged-out-center-container">
+            {/* 3D Rotating Triangle Delta Canvas */}
+            <div className="logged-out-delta-wrapper">
+              <TickerDelta
+                background="transparent"
+                direction="cw"
+                speed={0.65}
+                hoverSpeed={1.8}
+                thickness={4.8}
+                roundness={2.5}
+                shadow={0}
+                scale={140}
+                drag={true}
+                leftFace={{
+                  text: "STUDENT ATTAINMENT ·",
+                  size: 6.5,
+                  weight: "bold",
+                  fill: darkMode ? "#ffffff" : "#0f172a",
+                  ink: darkMode ? "#0f172a" : "#ffffff",
+                }}
+                topFace={{
+                  text: "STUDENT ATTAINMENT ·",
+                  size: 5,
+                  weight: "regular",
+                  fill: darkMode ? "#1f1f23" : "#f1f5f9",
+                  ink: darkMode ? "#ffffff" : "#0f172a",
+                }}
+                rightFace={{
+                  text: "STUDENT ATTAINMENT ·",
+                  size: 4,
+                  weight: "light",
+                  fill: darkMode ? "#52525b" : "#e2e8f0",
+                  ink: darkMode ? "#f4f4f6" : "#334155",
+                }}
+              />
+            </div>
+
+            {/* Central Attainx Brand Section */}
+            <div className="logged-out-brand-card">
+              <div className="logged-out-logo-row">
+                <img src={attainxLogo} alt="Attainx" className="logged-out-logo" />
+                <h1 className="logged-out-brand-title">Attainx</h1>
+              </div>
+
+              <span className="logged-out-badge">
+                OUTCOME-BASED EDUCATION WORKBENCH
+              </span>
+
+              <p className="logged-out-description">
+                Please log in to your account to configure curriculum data, upload
+                assessments, compute NBA CO-PO attainments, and generate official compliance reports.
+              </p>
+
+              <div className="logged-out-action-group">
+                <button
+                  type="button"
+                  className="logged-out-login-btn"
+                  onClick={() => navigate("/login")}
+                >
+                  <span>Log In to System</span>
+                  <span className="login-arrow">↗</span>
+                </button>
+
+                <div className="logged-out-register-prompt">
+                  <span>Don't have an account?</span>
+                  <button
+                    type="button"
+                    className="logged-out-create-link"
+                    onClick={() => navigate("/login", { state: { mode: "register" } })}
+                  >
+                    Create Account →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      ) : (
+        <main className="portal-main">
         {/* HEADER */}
         <header className="portal-header">
           <div>
@@ -2212,7 +2405,6 @@ function Portal() {
                 <div className="generated-columns-summary">
                   <span className="summary-title">Columns generated in Excel template:</span>
                   <div className="columns-badges">
-                    <span className="col-badge fixed">Name</span>
                     <span className="col-badge fixed">PRN</span>
                     <span className="col-badge fixed">CA1</span>
                     <span className="col-badge fixed">MSE</span>
@@ -2243,8 +2435,7 @@ function Portal() {
                   <thead>
                     <tr>
                       <th style={{ width: "60px" }}>#</th>
-                      <th style={{ width: "200px" }}>Name</th>
-                      <th style={{ width: "140px" }}>PRN Number</th>
+                      <th style={{ width: "160px" }}>PRN Number</th>
                       <th style={{ width: "90px" }}>CA1</th>
                       <th style={{ width: "90px" }}>MSE</th>
                       <th style={{ width: "90px" }}>CA2</th>
@@ -2267,9 +2458,10 @@ function Portal() {
                               ref={(el) => {
                                 templateGridRefs.current[`${rIdx}-0`] = el;
                               }}
-                              value={row.name}
-                              onChange={(e) => handleTemplateCellChange(rIdx, "name", e.target.value)}
-                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "name", cols.length, 0)}
+                              value={row.prn}
+                              onChange={(e) => handleTemplateCellChange(rIdx, "prn", e.target.value)}
+                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "prn", cols.length, 0)}
+                              placeholder="e.g. 2025CS101"
                             />
                           </td>
                           <td>
@@ -2277,9 +2469,10 @@ function Portal() {
                               ref={(el) => {
                                 templateGridRefs.current[`${rIdx}-1`] = el;
                               }}
-                              value={row.prn}
-                              onChange={(e) => handleTemplateCellChange(rIdx, "prn", e.target.value)}
-                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "prn", cols.length, 1)}
+                              value={row.ca1}
+                              onChange={(e) => handleTemplateCellChange(rIdx, "ca1", e.target.value)}
+                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "ca1", cols.length, 1)}
+                              inputMode="numeric"
                             />
                           </td>
                           <td>
@@ -2287,9 +2480,9 @@ function Portal() {
                               ref={(el) => {
                                 templateGridRefs.current[`${rIdx}-2`] = el;
                               }}
-                              value={row.ca1}
-                              onChange={(e) => handleTemplateCellChange(rIdx, "ca1", e.target.value)}
-                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "ca1", cols.length, 2)}
+                              value={row.mse}
+                              onChange={(e) => handleTemplateCellChange(rIdx, "mse", e.target.value)}
+                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "mse", cols.length, 2)}
                               inputMode="numeric"
                             />
                           </td>
@@ -2298,9 +2491,9 @@ function Portal() {
                               ref={(el) => {
                                 templateGridRefs.current[`${rIdx}-3`] = el;
                               }}
-                              value={row.mse}
-                              onChange={(e) => handleTemplateCellChange(rIdx, "mse", e.target.value)}
-                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "mse", cols.length, 3)}
+                              value={row.ca2}
+                              onChange={(e) => handleTemplateCellChange(rIdx, "ca2", e.target.value)}
+                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "ca2", cols.length, 3)}
                               inputMode="numeric"
                             />
                           </td>
@@ -2309,26 +2502,15 @@ function Portal() {
                               ref={(el) => {
                                 templateGridRefs.current[`${rIdx}-4`] = el;
                               }}
-                              value={row.ca2}
-                              onChange={(e) => handleTemplateCellChange(rIdx, "ca2", e.target.value)}
-                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "ca2", cols.length, 4)}
-                              inputMode="numeric"
-                            />
-                          </td>
-                          <td>
-                            <input
-                              ref={(el) => {
-                                templateGridRefs.current[`${rIdx}-5`] = el;
-                              }}
                               value={row.ese}
                               onChange={(e) => handleTemplateCellChange(rIdx, "ese", e.target.value)}
-                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "ese", cols.length, 5)}
+                              onKeyDown={(e) => handleTemplateKeyDown(e, rIdx, "ese", cols.length, 4)}
                               inputMode="numeric"
                             />
                           </td>
                           {Array.from({ length: templateCoCount }, (_, i) => {
                             const coKey = `co${i + 1}`;
-                            const cIdx = 6 + i;
+                            const cIdx = 5 + i;
                             return (
                               <td key={coKey}>
                                 <input
@@ -3314,6 +3496,7 @@ function Portal() {
           </div>
         </div>
       </main>
+      )}
 
       {/* =====================================
           DOWNLOAD FORMAT SELECTION MODAL

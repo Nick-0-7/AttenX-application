@@ -19,10 +19,10 @@ function App() {
     <Router>
       <SmoothScrollProvider>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Portal />} />
+          <Route path="/portal" element={<Portal />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/portal" element={<Portal />} />
           <Route path="/portal-skeleton" element={<PortalSkeleton />} />
           <Route path="/reportformat" element={<ReportFormat />} />
         </Routes>

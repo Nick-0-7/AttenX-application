@@ -85,40 +85,215 @@ body {
 
 
 /* =========================================
-   BACK BUTTON
+   AUTH TOP BAR & CONTROLS
 ========================================= */
 
-.back-button {
+.auth-top-bar {
   position: absolute;
-
-  top: 35px;
+  top: 30px;
   left: 5vw;
+  right: 5vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 25;
+}
 
-  z-index: 20;
-
-  padding: 11px 20px;
-
+.back-button {
+  padding: 10px 20px;
   border: 1px solid #3d3d3d;
-
   border-radius: 30px;
-
-  background: rgba(255, 255, 255, 0.02);
-
+  background: rgba(255, 255, 255, 0.04);
   color: #999;
-
   font-size: 13px;
-
+  font-weight: 500;
   cursor: pointer;
-
   transition: 0.3s;
 }
 
 .back-button:hover {
   color: white;
-
   border-color: #666;
+  background: #1a1a1a;
+}
 
-  background: #151515;
+.auth-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #3d3d3d;
+  color: #a1a1aa;
+}
+
+.auth-theme-toggle:hover {
+  border-color: #71717a;
+  color: #ffffff;
+}
+
+/* =========================================
+   LIGHT THEME OVERRIDES (Synced with Portal)
+========================================= */
+
+.auth-page.light {
+  background:
+    radial-gradient(
+      ellipse at 85% 50%,
+      #f1f5f9 0%,
+      #f8fafc 40%,
+      #ffffff 100%
+    );
+  color: #0f172a;
+}
+
+.auth-page.light .auth-glow-one {
+  background: #cbd5e1;
+  opacity: 0.2;
+}
+
+.auth-page.light .auth-glow-two {
+  background: #e2e8f0;
+  opacity: 0.25;
+}
+
+.auth-page.light .back-button {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.auth-page.light .back-button:hover {
+  border-color: #0f172a;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.auth-page.light .auth-theme-toggle {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.auth-page.light .auth-theme-toggle:hover {
+  border-color: #0f172a;
+  color: #0f172a;
+}
+
+.auth-page.light .auth-eyebrow {
+  color: #64748b;
+}
+
+.auth-page.light .auth-heading h1 {
+  color: #0f172a;
+}
+
+.auth-page.light .auth-heading h1 span {
+  color: #94a3b8;
+}
+
+.auth-page.light .auth-heading p {
+  color: #475569;
+}
+
+.auth-page.light .input-group label {
+  color: #475569;
+  font-weight: 600;
+}
+
+.auth-page.light .forgot-password {
+  color: #64748b;
+}
+
+.auth-page.light .forgot-password:hover {
+  color: #0f172a;
+}
+
+.auth-page.light .input-group input {
+  border-bottom: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+.auth-page.light .input-group input::placeholder {
+  color: #94a3b8;
+}
+
+.auth-page.light .input-group input:focus {
+  border-color: #0f172a;
+}
+
+.auth-page.light .input-group select {
+  background: #ffffff;
+  color: #0f172a;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.auth-page.light .input-group select:focus {
+  border-color: #0f172a;
+}
+
+.auth-page.light .login-button {
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+}
+
+.auth-page.light .login-button:hover {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #ffffff;
+}
+
+.auth-page.light .register-link span {
+  color: #64748b;
+}
+
+.auth-page.light .register-link button {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.auth-page.light .register-link button:hover {
+  color: #4f46e5;
+}
+
+.auth-page.light .auth-tabs {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.auth-page.light .auth-tab-btn {
+  color: #64748b;
+}
+
+.auth-page.light .auth-tab-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.auth-page.light .auth-tab-btn:hover:not(.active) {
+  color: #0f172a;
+}
+
+.auth-page.light .login-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.auth-page.light .login-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
 }
 
 

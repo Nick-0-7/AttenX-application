@@ -37,10 +37,9 @@ const downloadStudentMarksTemplate = async (req, res, next) => {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Student Marks");
 
-    // Columns: Roll No, Student Name, CO1, CO2, etc.
+    // Columns: Roll No / PRN, CO1, CO2, etc. (No Name column)
     const columns = [
       { header: "Roll No / PRN", key: "rollNo", width: 18 },
-      { header: "Student Name", key: "name", width: 25 },
     ];
 
     subject.cos.forEach((co) => {
@@ -53,7 +52,6 @@ const downloadStudentMarksTemplate = async (req, res, next) => {
     for (let i = 1; i <= 5; i++) {
       const sampleRow = {
         rollNo: `2025CS${100 + i}`,
-        name: `Sample Student ${i}`,
       };
       subject.cos.forEach((co) => {
         sampleRow[co.code] = Math.floor(Math.random() * 8) + 12;
