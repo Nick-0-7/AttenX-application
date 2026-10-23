@@ -262,7 +262,10 @@ function setupAutoUpdater() {
 }
 
 app.whenReady().then(() => {
-  startBackend();
+  const isDev = process.env.NODE_ENV === 'development';
+  if (!isDev) {
+    startBackend();
+  }
   createWindow();
   setupAutoUpdater();
 
