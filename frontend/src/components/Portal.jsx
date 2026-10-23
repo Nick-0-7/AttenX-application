@@ -8,6 +8,15 @@ import "../templates/Portal.css";
 import attainxLogo from "../assets/attainx-logo.png";
 import TickerDelta from "./TickerDelta";
 
+/**
+ * Checks whether a curriculum subject is a laboratory / practical course
+ */
+const isLabSubject = (subject) => {
+  if (!subject) return false;
+  const text = `${subject.code || ""} ${subject.title || ""}`.toLowerCase();
+  return /\blab(oratory|pratory)?\b|\bpractical\b|\bpr\b/i.test(text);
+};
+
 // =========================================
 // SVG ICONS (Crisp, themeable, zero-emoji)
 // =========================================
@@ -750,11 +759,25 @@ function Portal() {
   const [selectedSubjectTitle, setSelectedSubjectTitle] = useState("");
   const [isAutoLoaded, setIsAutoLoaded] = useState(false);
 
-  // Available subjects filtered by Academic Year
-  const availableSubjects = curriculumSubjects.filter((s) => {
-    if (!academicYear) return true;
-    return s.academicYear === academicYear;
-  });
+  // Available subjects filtered by Academic Year AND Attainment Type (Theory vs Laboratory)
+  const availableSubjects = useMemo(() => {
+    return curriculumSubjects.filter((s) => {
+      if (academicYear && s.academicYear !== academicYear) {
+        return false;
+      }
+      const isLab = isLabSubject(s);
+      if (attainmentType === "theory") {
+        return !isLab;
+      }
+      if (attainmentType === "laboratory" || attainmentType === "lab-pr-or") {
+        return isLab;
+      }
+      if (attainmentType === "audit-course") {
+        return !isLab;
+      }
+      return true;
+    });
+  }, [academicYear, attainmentType]);
 
   // =========================================
   // STEP 3: COURSE OUTCOMES & MAPPING STATE
@@ -878,6 +901,37 @@ function Portal() {
         setSelectedSubjectCode("");
         setSelectedSubjectTitle("");
         setIsAutoLoaded(false);
+      }
+    }
+  };
+
+  const handleAttainmentTypeSelect = (type) => {
+    setAttainmentType(type);
+    setStepError("");
+
+    if (selectedSubjectCode) {
+      const currentSub = curriculumSubjects.find((s) => s.code === selectedSubjectCode);
+      if (currentSub) {
+        const isLab = isLabSubject(currentSub);
+        const shouldReset =
+          (type === "theory" && isLab) ||
+          ((type === "laboratory" || type === "lab-pr-or") && !isLab) ||
+          (type === "audit-course" && isLab);
+
+        if (shouldReset) {
+          setSelectedSubjectCode("");
+          setSelectedSubjectTitle("");
+          setIsAutoLoaded(false);
+          setCos({
+            CO1: "",
+            CO2: "",
+            CO3: "",
+            CO4: "",
+            CO5: "",
+            CO6: "",
+          });
+          setMapping(createEmptyMapping());
+        }
       }
     }
   };
@@ -2653,10 +2707,7 @@ function Portal() {
                   className={`attainment-type-card ${attainmentType === "theory" ? "selected" : ""
                     }`}
                   aria-pressed={attainmentType === "theory"}
-                  onClick={() => {
-                    setAttainmentType("theory");
-                    setStepError("");
-                  }}
+                  onClick={() => handleAttainmentTypeSelect("theory")}
                 >
                   <span className="attainment-type-number">01</span>
                   <strong>Theory Attainment</strong>
@@ -2677,10 +2728,7 @@ function Portal() {
                   className={`attainment-type-card ${attainmentType === "laboratory" ? "selected" : ""
                     }`}
                   aria-pressed={attainmentType === "laboratory"}
-                  onClick={() => {
-                    setAttainmentType("laboratory");
-                    setStepError("");
-                  }}
+                  onClick={() => handleAttainmentTypeSelect("laboratory")}
                 >
                   <span className="attainment-type-number">02</span>
                   <strong>Laboratory Attainment</strong>
@@ -2701,10 +2749,7 @@ function Portal() {
                   className={`attainment-type-card ${attainmentType === "lab-pr-or" ? "selected" : ""
                     }`}
                   aria-pressed={attainmentType === "lab-pr-or"}
-                  onClick={() => {
-                    setAttainmentType("lab-pr-or");
-                    setStepError("");
-                  }}
+                  onClick={() => handleAttainmentTypeSelect("lab-pr-or")}
                 >
                   <span className="attainment-type-number">03</span>
                   <strong>Laboratory with PR/OR</strong>
@@ -2725,10 +2770,7 @@ function Portal() {
                   className={`attainment-type-card ${attainmentType === "audit-course" ? "selected" : ""
                     }`}
                   aria-pressed={attainmentType === "audit-course"}
-                  onClick={() => {
-                    setAttainmentType("audit-course");
-                    setStepError("");
-                  }}
+                  onClick={() => handleAttainmentTypeSelect("audit-course")}
                 >
                   <span className="attainment-type-number">04</span>
                   <strong>Audit Course</strong>
@@ -2828,7 +2870,9 @@ function Portal() {
                       value={selectedSubjectCode}
                       onChange={(e) => handleSubjectSelect(e.target.value)}
                     >
-                      <option value="">-- Choose Subject (Auto-fill) --</option>
+                      <option value="">
+                        -- Choose {attainmentType === "theory" ? "Theory Subject" : (attainmentType === "laboratory" || attainmentType === "lab-pr-or") ? "Laboratory Subject" : "Subject"} (Auto-fill) --
+                      </option>
                       {availableSubjects.map((sub) => (
                         <option key={sub.code} value={sub.code}>
                           {sub.code} - {sub.title}
@@ -2840,7 +2884,11 @@ function Portal() {
                     </span>
                   </div>
                   <small className="academic-select-hint">
-                    Auto-populates COs & correlation matrix for Step 3
+                    {attainmentType === "theory"
+                      ? `Showing Theory subjects for ${academicYear || "selected year"}`
+                      : (attainmentType === "laboratory" || attainmentType === "lab-pr-or")
+                        ? `Showing Laboratory subjects for ${academicYear || "selected year"}`
+                        : "Auto-populates COs & correlation matrix for Step 3"}
                   </small>
                 </div>
               </div>
